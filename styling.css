@@ -62,7 +62,7 @@
 .menu-btn {
     display: none;
     color: var(--text-light);
-    font-size: 2rem;
+    font-size: 3rem;
     cursor: pointer;
 }
 
@@ -804,18 +804,13 @@ textarea.form-control {
         border-bottom: 1px solid #fff;
     }
 
-    .logo {
-        display: inline-block;
-        width: 100px;
-        border: none;
+    .logo h1 {
+        font-size: 25px;
+        font-weight: bold;
+        color: #f9c74f;
+        /* Accent color */
     }
 
-    .logo img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-        border-radius: 10px;
-    }
 
     .hero h1 {
         font-size: 2rem;
