@@ -62,7 +62,7 @@
 .menu-btn {
     display: none;
     color: var(--text-light);
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     cursor: pointer;
 }
 
@@ -790,10 +790,11 @@ textarea.form-control {
     }
 
     .logo h1 {
-        font-size: 28px;
+        font-size: 27px;
         font-weight: bold;
         color: #f9c74f;
         width: 20%;
+        text-align: center;
         /* Accent color */
     }
 
