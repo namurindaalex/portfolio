@@ -1,5 +1,5 @@
 // Smooth Scrolling for Navigation Links
-document.querySelectorAll('nav ul li a').forEach(link => {
+document.querySelectorAll('.nav-links a').forEach(link => {
     link.addEventListener('click', (e) => {
         e.preventDefault();
         const targetId = link.getAttribute('href').substring(1);
@@ -10,6 +10,3 @@ document.querySelectorAll('nav ul li a').forEach(link => {
         });
     });
 });
-
-
-
