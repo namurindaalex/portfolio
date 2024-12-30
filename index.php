@@ -341,35 +341,6 @@
             </script>
         <?php endif; ?> -->
 
-        <div class="contact-container" id="contact">
-            <h2 style="text-align: center; margin-bottom: 1rem;">Contact Me</h2>
-            <p style="text-align: center; margin-bottom: 3rem;">Have questions? I'd love to hear from you.</p>
-
-            <form class="contact-form" action="" method="POST" data-aos="fade-up">
-                <div class="form-group">
-                    <input type="text" class="form-control" name="name" placeholder="Name" required>
-                    <label class="floating-label" for="name">Name</label>
-                </div>
-
-                <div class="form-group">
-                    <input type="email" class="form-control" name="email" placeholder="Email" required>
-                    <label class="floating-label" for="email">Email</label>
-                </div>
-
-                <div class="form-group">
-                    <input type="text" class="form-control" name="subject" placeholder="Subject" required>
-                    <label class="floating-label" for="subject">Subject</label>
-                </div>
-
-                <div class="form-group">
-                    <textarea class="form-control" name="message" placeholder="Message" required></textarea>
-                    <label class="floating-label" for="message">Message</label>
-                </div>
-
-                <button type="submit" class="btn2">Send Message</button>
-            </form>
-        </div>
-
         <style>
             .popup {
                 display: none;
