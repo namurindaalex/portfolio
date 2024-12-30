@@ -110,6 +110,8 @@
             <a href="#contact">CONTACT</a>
             <a href="#testimonies">TESTIMONIES</a>
         </nav>
+
+        <div class="menu-btn">☰</div>
     </header>
 
 
