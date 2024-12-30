@@ -512,6 +512,7 @@ footer {
     margin-right: 20px;
 }
 
+
 .socials p {
     margin-block: 1rem;
     margin-left: 10px;
@@ -526,8 +527,16 @@ footer {
     margin-right: 0.5rem;
 }
 
-.contact-us-footer p i {
+.contact-us-footer p a i {
     margin-right: 0.5rem;
+}
+
+.contact-us-footer p a{
+    text-decoration: none;
+    color: #fff;
+}
+.contact-us-footer p a:hover{
+    color: blue;
 }
 
 .logo-footer {
