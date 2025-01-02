@@ -838,6 +838,7 @@ textarea.form-control {
         margin-block: 1rem;
         text-align: justify;
         margin-left: 10%;
+        margin-right: 10%;
     }
 
     .quick-links h2,
