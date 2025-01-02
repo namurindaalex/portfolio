@@ -829,10 +829,15 @@ textarea.form-control {
     }
 
     .quick-links p,
-    .contact-us-footer p,
     .socials p {
         margin-block: 1rem;
+        text-align: center;
+    }
+    
+    .contact-us-footer p{
+        margin-block: 1rem;
         text-align: justify;
+        margin-left: 10%;
     }
 
     .quick-links h2,
