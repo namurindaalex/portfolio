@@ -493,29 +493,27 @@
 footer {
     background: #8b8b8b;
     color: var(--text-light);
-    padding: 2rem;
+    padding: 2rem 0rem 2rem 5rem;
+    justify-content: space-around;
 }
 
 .footer-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     align-items: center;
-    gap: 2rem;
+    gap: 3rem;
     max-width: 1200px;
-    margin-left: 15%;
-
 }
 
 .quick-links p,
 .contact-us-footer p {
     margin-block: 1rem;
-    margin-right: 20px;
 }
 
 
-.socials p {
+.socials p, .socials h2 {
     margin-block: 1rem;
-    margin-left: 10px;
+    margin-left: 100px;
 }
 
 .socials p a {
@@ -812,22 +810,6 @@ textarea.form-control {
         font-size: 2rem;
     }
 
-    .logo-footer-image {
-        display: inline-block;
-        width: 270px;
-        height: 150px;
-        overflow: hidden;
-        border-radius: 10px;
-        justify-content: center;
-    }
-
-    .logo-footer-image img {
-        width: 100%;
-        height: 100%;
-        justify-content: centers;
-        border-radius: 50%;
-    }
-
     .quick-links p,
     .socials p {
         margin-block: 1rem;
@@ -838,7 +820,7 @@ textarea.form-control {
         margin-block: 1rem;
         text-align: justify;
         margin-left: 10%;
-        margin-right: 10%;
+        margin-right: 5%;
     }
 
     .quick-links h2,
@@ -848,11 +830,9 @@ textarea.form-control {
         text-align: center;
     }
 
-    .logo-footer {
-        border-right: none;
-        border-bottom: 2px solid #fff;
-        margin-right: none;
-        justify-content: center;
+    .socials p, .socials h2 {
+        margin-block: 1rem;
+        margin-left: 0;
     }
 
     .hero-bg {

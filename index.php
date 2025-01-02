@@ -376,15 +376,41 @@
             <div class="quick-links">
                 <h2>Quick Links</h2>
                 <p><a href="#home" style="color: white;">Home</a></p>
-                <p><a href="#projects" style="color: white;">projects</a></p>
-                <p><a href="#about" style="color: white;">About Us</a></p>
-                <p><a href="#how-it-works" style="color: white;">How It Works</a></p>
+                <p><a href="#projects" style="color: white;">Projects</a></p>
+                <p><a href="#about" style="color: white;">About Me</a></p>
             </div>
             <div class="contact-us-footer">
                 <h2>Contact Details</h2>
-                <p><i class='bx bxs-envelope'></i>namurindaalex43@gmail.com</p>
-                <p><i class='bx bxs-phone-call'></i>Phone: +256780393671</p>
-                <p><i class="fas fa-map-marker-alt"></i>Jinja Road, Nabisunsa close, Kampala</p>
+
+                <!-- Email with a clickable link -->
+                <p>
+                    <a href="mailto:namurindaalex43@gmail.com">
+                        <i class='bx bxs-envelope'></i> namurindaalex43@gmail.com
+                    </a>
+                </p>
+
+                <!-- Phone Call link -->
+                <p>
+                    <a href="tel:+256780393671">
+                        <i class='bx bxs-phone-call'></i> Call: +256780393671
+                    </a>
+                </p>
+
+                <!-- WhatsApp link -->
+                <p>
+                    <a href="https://wa.me/256744766410" target="_blank">
+                        <i class='bx bxl-whatsapp'></i> WhatsApp: +256744766410
+                    </a>
+                </p>
+
+                <!-- Physical Address -->
+                <p>
+                    <a href="https://www.google.com/maps/search/?api=1&query=Nabisunsa+Close+Kampala"
+                        target="_blank">
+                        <i class="fas fa-map-marker-alt"></i> Jinja Road, Nabisunsa Close, Kampala
+                    </a>
+                </p>
+
             </div>
             <div class="socials">
                 <h2>My socials</h2>
