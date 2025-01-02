@@ -669,12 +669,6 @@ footer {
     background: #f6921e;
 }
 
-/* Contact Section Styles */
-.contact-section {
-    padding: 6rem 2rem;
-    background: white;
-}
-
 .contact-container {
     max-width: 800px;
     margin: 0 auto;
