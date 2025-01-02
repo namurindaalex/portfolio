@@ -122,7 +122,7 @@
             <h1 id="demo"></h1>
             <p>A Backend Developer | Creative Problem Solver | Communication Engineer | Embedded System Designer | IT Consultant</p>
             <div class="cta">
-                <a href="cv.pdf" download class="btn">Download Resume</a>
+                <a href="cv.pdf" download class="btn">Download CV</a>
                 <a href="#contact" class="btn">Hire Me</a>
             </div>
         </div>
