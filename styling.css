@@ -832,7 +832,7 @@ textarea.form-control {
     .contact-us-footer p,
     .socials p {
         margin-block: 1rem;
-        text-align: center;
+        text-align: justify;
     }
 
     .quick-links h2,
