@@ -350,14 +350,6 @@
     </section>
 
     <section class="contact-section" id="contact-section">
-        <!-- <?php if ($statusMessage): ?>
-            <div id="popup" class="popup"></div>
-            <script>
-                // Display popup with PHP message
-                showPopup("<?php echo $statusMessage; ?>");
-            </script>
-        <?php endif; ?> -->
-
         <style>
             .popup {
                 display: none;
@@ -375,8 +367,50 @@
         </style>
     </section>
 
-    <script src="https://static.elfsight.com/platform/platform.js" async></script>
-    <div class="elfsight-app-ed47ff79-c1aa-40ee-a5cb-1190ecb3d578" data-elfsight-app-lazy id="testimonies"></div>
+    <section class="documents" id="documents">
+        <h2 style="text-align: center; margin-bottom: 1.7rem;">Relevant Documents</h2>
+        <p style="text-align: center;">
+        </p>
+        <div class="documents-grid">
+            <!-- Example of a Document Preview -->
+            <div class="document-card">
+                <div class="document-preview">
+                    <img src="DOCUMENTS/PLE_1.jpg" alt="Academic Document" class="document-image">
+                </div>
+                <h3>Academic Documents</h3>
+                <button onclick="showList('academic-docs')" class="btn">View</button>
+            </div>
+
+            <!-- Example of a Certificate -->
+            <div class="document-card">
+                <div class="document-preview">
+                    <img src="DOCUMENTS/SMIS_1.jpg" alt="Certificate" class="document-image">
+                </div>
+                <h3>Certificates and Awards</h3>
+                <button onclick="showList('certificates')" class="btn">View</button>
+            </div>
+
+            <!-- Example of Awards -->
+            <div class="document-card">
+                <div class="document-preview">
+                    <img src="images/sample-award.png" alt="Award" class="document-image">
+                </div>
+                <h3>Awards</h3>
+                <button onclick="showList('awards')" class="btn">View</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal for List -->
+    <div id="documentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">Select a Document</h3>
+            <ul id="documentList"></ul>
+        </div>
+    </div>
+
+
 
     <!-- Footer -->
     <footer id="contact">
@@ -388,7 +422,7 @@
                 <p><a href="#projects" style="color: white;">Projects</a></p>
                 <p><a href="#about" style="color: white;">About Me</a></p>
             </div>
-            
+
             <div class="contact-us-footer">
                 <h2>Contact Details</h2>
 
@@ -415,8 +449,7 @@
 
                 <!-- Physical Address -->
                 <p>
-                    <a href="https://www.google.com/maps/search/?api=1&query=Nabisunsa+Close+Kampala"
-                        target="_blank">
+                    <a href="https://www.google.com/maps/search/?api=1&query=Nabisunsa+Close+Kampala" target="_blank">
                         <i class="fas fa-map-marker-alt"></i> Jinja Road, Nabisunsa Close, Kampala
                     </a>
                 </p>
@@ -425,9 +458,12 @@
 
             <div class="socials">
                 <h2>My socials</h2>
-                <p><a href="https://wa.me/256744766410" target="_blank"><i class='bx bxl-whatsapp' style="color: #fff;"></i> WhatsApp</a></p>
-                <p><a href="https://www.linkedin.com/in/namurinda-alex-25217a255/"><i class="fab fa-linkedin"style="color: #fff;"></i> LinkedIn</a></p>
-                <p><a href="https://x.com/namurindaalex43"><i class="fab fa-twitter" style="color: #fff;"></i>Twitter</a></p>
+                <p><a href="https://wa.me/256744766410" target="_blank"><i class='bx bxl-whatsapp'
+                            style="color: #fff;"></i> WhatsApp</a></p>
+                <p><a href="https://www.linkedin.com/in/namurinda-alex-25217a255/"><i class="fab fa-linkedin"
+                            style="color: #fff;"></i> LinkedIn</a></p>
+                <p><a href="https://x.com/namurindaalex43"><i class="fab fa-twitter"
+                            style="color: #fff;"></i>Twitter</a></p>
             </div>
         </div>
     </footer>
@@ -504,6 +540,66 @@
             easing: 'ease-in-out',
         });
     </script>
+
+    <script>
+        function viewDocument(url) {
+            // Open document in a modal or a secure iframe
+            window.open(url, "_blank", "noopener,noreferrer");
+        }
+    </script>
+
+    <script>
+        const documents = {
+            "academic-docs": [
+                { name: "Diploma Transcript", url: "DOCUMENTS/diploma transcript.jpg" },
+                { name: "University testimonial", url: "DOCUMENTS/university testimonial.pdf" },
+                { name: "UACE Results", url: "DOCUMENTS/UACE.jpg" },
+                { name: "UCE Results", url: "DOCUMENTS/UCE Certificate_1.jpg" },
+                { name: "PLE Results", url: "DOCUMENTS/PLE_1.jpg" }
+            ],
+            "certificates": [
+                { name: "Certificate of completion in COmputer Networking", url: "DOCUMENTS/SMIS_1.jpg" },
+                { name: "Certificate for galactic problem solver", url: "DOCUMENTS/NASA Space Apps Challenge.pdf" },
+                { name: "Certificate of participation in embedded system design", url: "DOCUMENTS/Embedded systems_1.jpg" },
+                { name: "Certificate of merit for Student leadership", url: "DOCUMENTS/Chairperson Sch. council_1.jpg" },
+                { name: "Employee of the month", url: "DOCUMENTS/Employee_1.jpg" }
+            ],
+            "awards": [
+                { name: "Employee of the Month", url: "documents/employee-award.pdf" },
+                { name: "Best Innovator", url: "documents/innovator-award.pdf" }
+            ]
+        };
+
+        function showList(category) {
+            const listContainer = document.getElementById("documentList");
+            const modalTitle = document.getElementById("modalTitle");
+
+            // Clear the previous list
+            listContainer.innerHTML = "";
+
+            // Set modal title
+            modalTitle.innerText = `Select a ${category.replace('-', ' ').toUpperCase()}`;
+
+            // Populate the list
+            documents[category].forEach(doc => {
+                const listItem = document.createElement("li");
+                const button = document.createElement("button");
+                button.textContent = doc.name;
+                button.onclick = () => window.open(doc.url, "_blank", "noopener,noreferrer");
+                listItem.appendChild(button);
+                listContainer.appendChild(listItem);
+            });
+
+            // Show the modal
+            document.getElementById("documentModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("documentModal").style.display = "none";
+        }
+    </script>
+
+
 </body>
 
 </html>
