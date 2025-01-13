@@ -908,12 +908,13 @@ ul li button:hover {
     .socials p {
         margin-block: 1rem;
         text-align: center;
+        margin-left: -100px;
     }
     
     .contact-us-footer p{
         margin-block: 1rem;
         text-align: center;
-        margin-left: -50px;
+        margin-left: -100px;
     }
 
     .quick-links h2,
@@ -921,11 +922,12 @@ ul li button:hover {
     .socials h2 {
         margin-block: 1rem;
         text-align: center;
+        margin-left: -100px;
     }
 
     .socials p, .socials h2 {
         margin-block: 1rem;
-        margin-left: 0;
+        margin-left: -100px;
     }
 
     .hero-bg {
