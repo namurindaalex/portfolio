@@ -463,7 +463,7 @@
 }
 
 .btn {
-    background-color: #f6921e;
+    background-color: #f9c74f;
     color: white;
     border: none;
     padding: 0.8rem 1.5rem;
@@ -474,7 +474,7 @@
 }
 
 .btn2 {
-    background-color: #f6921e;
+    background-color: #f9c74f;
     color: white;
     border: none;
     padding: 0.8rem 1.5rem;
@@ -757,8 +757,9 @@ textarea.form-control {
 
 .btn {
     margin-top: 10px;
-    background-color: #007bff;
+    background-color: #f9c74f;
     color: white;
+    font-size: 18px;
     border: none;
     padding: 0.5rem 1rem;
     cursor: pointer;
@@ -766,7 +767,7 @@ textarea.form-control {
 }
 
 .btn:hover {
-    background-color: #0056b3;
+    background-color: #3498db;
 }
 
 .modal {
@@ -947,7 +948,7 @@ ul li button:hover {
     }
 
     .btn2 {
-        background-color: #f6921e;
+        background-color: #f9c74f;
         color: white;
         border: none;
         padding: 0.8rem 1.5rem;
