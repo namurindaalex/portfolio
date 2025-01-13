@@ -913,6 +913,7 @@ ul li button:hover {
     .contact-us-footer p{
         margin-block: 1rem;
         text-align: center;
+        margin-left: -50px;
     }
 
     .quick-links h2,
