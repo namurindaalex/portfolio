@@ -414,8 +414,7 @@
             </div>
             <div class="socials">
                 <h2>My socials</h2>
-                <p><a href="#"><i class='fab fa-facebook' style="color: #fff;"></i> Facebook</a></p>
-                <p><a href="#"><i class='fab fa-instagram' style="color: #fff;"></i> Instagram</a></p>
+                <p><a href="https://wa.me/256744766410" target="_blank"><i class='bx bxl-whatsapp' style="color: #fff;"></i> WhatsApp</a></p>
                 <p><a href="#"><i class="fab fa-linkedin" style="color: #fff;"></i> LinkedIn</a></p>
                 <p><a href="#"><i class="fab fa-twitter" style="color: #fff;"></i> Twitter</a></p>
             </div>

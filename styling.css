@@ -812,9 +812,7 @@ textarea.form-control {
     
     .contact-us-footer p{
         margin-block: 1rem;
-        text-align: justify;
-        margin-left: 0%;
-        margin-right: 0%;
+        text-align: center;
     }
 
     .quick-links h2,
