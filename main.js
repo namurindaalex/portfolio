@@ -1,8 +1,8 @@
 // Configuration
 const CONFIG = {
-    SHEET_ID: '1YourSheetIdHere', // Replace with your Google Sheet ID
-    API_KEY: 'YourApiKeyHere', // Replace with your Google Sheets API key
-    SHEET_NAME: 'DeliveryData'
+    SHEET_ID: '17MHb6_7adccMAAzQZpceWRgCiu8DETcDNmFXDWQXBvo', // Replace with your Google Sheet ID
+    API_KEY: 'AIzaSyDo2jcgXLyef3Myck6BekuVcWVyoGiuS2o', // Replace with your Google Sheets API key
+    SHEET_NAME: 'UNEECO Delivery Sheet'
 };
 
 // Global variables
