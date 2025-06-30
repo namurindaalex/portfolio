@@ -1,13 +1,15 @@
-// script.js
+// script.js - Updated for Google Sheets Integration
 
 // Global variables for data storage
 let deliveryData = [];
 let currentEditIndex = -1;
 
+// Your Google Apps Script Web App URL
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7rViLIC_TS5_DaNtHsEzIiMNnraAdPTKg1XxHFfytbHOeV_Wb3bVnvHkY5GoHqyXV/exec';
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    loadData();
-    updateDashboard();
+    loadDataFromSheets();
     setupEventListeners();
     
     // Set today's date as default
@@ -25,9 +27,6 @@ function setupEventListeners() {
     
     // Import file listener
     document.getElementById('importFile').addEventListener('change', handleFileImport);
-    
-    // Auto-save data every 30 seconds
-    setInterval(saveData, 30000);
 }
 
 // Tab Management
@@ -53,45 +52,161 @@ function showTab(tabName) {
 }
 
 // Form Management
-function handleFormSubmit(e) {
+async function handleFormSubmit(e) {
     e.preventDefault();
     
     const formData = {
-        id: currentEditIndex >= 0 ? deliveryData[currentEditIndex].id : Date.now(),
         invoiceNumber: document.getElementById('invoiceNumber').value,
         deliveryDate: document.getElementById('deliveryDate').value,
         dispatchTime: document.getElementById('dispatchTime').value,
         arrivalTime: document.getElementById('arrivalTime').value,
         storeSupervisor: document.getElementById('storeSupervisor').value,
         deliveryPerson: document.getElementById('deliveryPerson').value,
-        vehicleNumber: document.getElementById('vehicleNumber').value || 'N/A',
-        timestamp: new Date().toISOString()
+        vehicleNumber: document.getElementById('vehicleNumber').value || 'N/A'
     };
     
     // Calculate delivery time and status
     const deliveryStats = calculateDeliveryStats(formData.dispatchTime, formData.arrivalTime);
     formData.deliveryTimeMinutes = deliveryStats.minutes;
     formData.isSuccessful = deliveryStats.isSuccessful;
+    formData.successRate = deliveryStats.isSuccessful ? 100 : 0; // Individual delivery success rate
     
     // Validate required fields
     if (!validateForm(formData)) {
         return;
     }
     
-    // Save data
-    if (currentEditIndex >= 0) {
-        deliveryData[currentEditIndex] = formData;
-        showMessage('Delivery record updated successfully!', 'success');
-    } else {
-        deliveryData.push(formData);
-        showMessage('Delivery record added successfully!', 'success');
-    }
+    // Show loading message
+    showMessage('Saving delivery record...', 'info');
     
-    // Reset form and update displays
-    clearForm();
-    saveData();
-    updateDashboard();
-    populateRecordsTable();
+    try {
+        if (currentEditIndex >= 0) {
+            // Update existing record
+            const existingRecord = deliveryData[currentEditIndex];
+            formData.id = existingRecord.id;
+            
+            const response = await updateRecordInSheets(formData.id, formData);
+            if (response.success) {
+                deliveryData[currentEditIndex] = { ...formData, id: existingRecord.id };
+                showMessage('Delivery record updated successfully!', 'success');
+            } else {
+                throw new Error(response.message);
+            }
+        } else {
+            // Add new record
+            const response = await saveRecordToSheets(formData);
+            if (response.success) {
+                formData.id = response.data.id;
+                deliveryData.push(formData);
+                showMessage('Delivery record saved successfully!', 'success');
+            } else {
+                throw new Error(response.message);
+            }
+        }
+        
+        // Reset form and update displays
+        clearForm();
+        updateDashboard();
+        populateRecordsTable();
+        
+    } catch (error) {
+        console.error('Error saving record:', error);
+        showMessage('Error saving record: ' + error.message, 'error');
+    }
+}
+
+// Save record to Google Sheets
+async function saveRecordToSheets(record) {
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'saveData',
+                data: record
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+        
+    } catch (error) {
+        console.error('Error saving to sheets:', error);
+        throw error;
+    }
+}
+
+// Update record in Google Sheets
+async function updateRecordInSheets(id, record) {
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'updateData',
+                id: id,
+                data: record
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+        
+    } catch (error) {
+        console.error('Error updating record in sheets:', error);
+        throw error;
+    }
+}
+
+// Load data from Google Sheets
+async function loadDataFromSheets() {
+    try {
+        showMessage('Loading data from Google Sheets...', 'info');
+        
+        const response = await fetch(GOOGLE_SCRIPT_URL + '?action=getData');
+        const result = await response.json();
+        
+        if (result.success) {
+            deliveryData = result.data || [];
+            updateDashboard();
+            populateRecordsTable();
+            showMessage('Data loaded successfully!', 'success');
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        showMessage('Error loading data: ' + error.message, 'error');
+        deliveryData = []; // Initialize with empty array
+    }
+}
+
+// Delete record from Google Sheets
+async function deleteRecordFromSheets(id) {
+    try {
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'deleteData',
+                id: id
+            })
+        });
+        
+        const result = await response.json();
+        return result;
+        
+    } catch (error) {
+        console.error('Error deleting from sheets:', error);
+        throw error;
+    }
 }
 
 function validateForm(data) {
@@ -157,8 +272,23 @@ function calculateDeliveryStats(dispatchTime, arrivalTime) {
     };
 }
 
-// Dashboard Functions
+// Dashboard Functions - Updated to use real data from sheets
 function updateDashboard() {
+    if (deliveryData.length === 0) {
+        // Reset dashboard to zeros
+        document.getElementById('todaySuccess').textContent = '0%';
+        document.getElementById('weeklyAverage').textContent = '0%';
+        document.getElementById('dailyKPI').textContent = '0%';
+        document.getElementById('dailyTotal').textContent = '0';
+        document.getElementById('dailySuccessful').textContent = '0';
+        document.getElementById('weeklyKPI').textContent = '0%';
+        document.getElementById('activeDays').textContent = '0';
+        document.getElementById('weeklyTotal').textContent = '0';
+        document.getElementById('targetAchievement').textContent = '0%';
+        document.getElementById('targetProgress').style.width = '0%';
+        return;
+    }
+    
     const today = new Date().toISOString().split('T')[0];
     const weekStart = getWeekStart(new Date());
     
@@ -316,13 +446,26 @@ function editRecord(index) {
     showMessage('Record loaded for editing', 'success');
 }
 
-function deleteRecord(index) {
+async function deleteRecord(index) {
     if (confirm('Are you sure you want to delete this record?')) {
-        deliveryData.splice(index, 1);
-        saveData();
-        populateRecordsTable();
-        updateDashboard();
-        showMessage('Record deleted successfully', 'success');
+        const record = deliveryData[index];
+        
+        try {
+            showMessage('Deleting record...', 'info');
+            
+            const response = await deleteRecordFromSheets(record.id);
+            if (response.success) {
+                deliveryData.splice(index, 1);
+                populateRecordsTable();
+                updateDashboard();
+                showMessage('Record deleted successfully', 'success');
+            } else {
+                throw new Error(response.message);
+            }
+        } catch (error) {
+            console.error('Error deleting record:', error);
+            showMessage('Error deleting record: ' + error.message, 'error');
+        }
     }
 }
 
@@ -432,7 +575,6 @@ function handleFileImport(event) {
                 const importedData = JSON.parse(e.target.result);
                 if (importedData.data && Array.isArray(importedData.data)) {
                     deliveryData = importedData.data;
-                    saveData();
                     updateDashboard();
                     populateRecordsTable();
                     showMessage(`Imported ${importedData.data.length} records successfully`, 'success');
@@ -459,13 +601,12 @@ function handleFileImport(event) {
                             storeSupervisor: values[6],
                             deliveryPerson: values[7],
                             vehicleNumber: values[8] || 'N/A',
-                            timestamp: new Date().toISOString()
+                            successRate: values[5] === 'Success' ? 100 : 0
                         });
                     }
                 }
                 
                 deliveryData = imported;
-                saveData();
                 updateDashboard();
                 populateRecordsTable();
                 showMessage(`Imported ${imported.length} records from CSV`, 'success');
@@ -489,75 +630,6 @@ function downloadFile(content, filename, contentType) {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-}
-
-// Data Persistence Functions
-function saveData() {
-    try {
-        // In a real application, this would send data to a server
-        // For now, we'll use localStorage as a fallback
-        const dataToSave = {
-            version: '1.0',
-            lastUpdate: new Date().toISOString(),
-            records: deliveryData
-        };
-        
-        // Note: In the Claude.ai environment, localStorage isn't available
-        // This is where you would integrate with your preferred cloud storage
-        console.log('Data saved:', dataToSave);
-        
-        // Example cloud storage integration points:
-        // - Firebase Firestore
-        // - Google Sheets API
-        // - Custom REST API
-        // - Airtable API
-        
-    } catch (error) {
-        console.error('Error saving data:', error);
-    }
-}
-
-function loadData() {
-    try {
-        // In a real application, this would fetch data from a server
-        // For demo purposes, we'll start with empty data
-        
-        // Example data for demonstration
-        deliveryData = [
-            {
-                id: 1,
-                invoiceNumber: 'INV-001',
-                deliveryDate: new Date().toISOString().split('T')[0],
-                dispatchTime: '09:00',
-                arrivalTime: '09:30',
-                deliveryTimeMinutes: 30,
-                isSuccessful: true,
-                storeSupervisor: 'John Smith',
-                deliveryPerson: 'Mike Johnson',
-                vehicleNumber: 'ABC-123',
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 2,
-                invoiceNumber: 'INV-002',
-                deliveryDate: new Date().toISOString().split('T')[0],
-                dispatchTime: '10:00',
-                arrivalTime: '11:00',
-                deliveryTimeMinutes: 60,
-                isSuccessful: false,
-                storeSupervisor: 'Jane Doe',
-                deliveryPerson: 'Sarah Wilson',
-                vehicleNumber: 'XYZ-789',
-                timestamp: new Date().toISOString()
-            }
-        ];
-        
-        console.log('Sample data loaded');
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
-        deliveryData = [];
-    }
 }
 
 // Utility Functions
@@ -592,28 +664,8 @@ function showMessage(message, type = 'success') {
     }, 5000);
 }
 
-// Cloud Storage Integration Examples
-// Deployment id AKfycby7rViLIC_TS5_DaNtHsEzIiMNnraAdPTKg1XxHFfytbHOeV_Wb3bVnvHkY5GoHqyXV
-// Google Sheets API Example
-async function saveToGoogleSheets() {
-    try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycby7rViLIC_TS5_DaNtHsEzIiMNnraAdPTKg1XxHFfytbHOeV_Wb3bVnvHkY5GoHqyXV/exec', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                action: 'saveData',
-                data: deliveryData
-            })
-        });
-        
-        if (response.ok) {
-            showMessage('Data synced to Google Sheets', 'success');
-        } else {
-            throw new Error('Failed to sync');
-        }
-    } catch (error) {
-        showMessage('Error syncing to Google Sheets: ' + error.message, 'error');
-    }
+// Refresh data from sheets (optional function for manual refresh)
+async function refreshDataFromSheets() {
+    await loadDataFromSheets();
+    showMessage('Data refreshed from Google Sheets', 'success');
 }
