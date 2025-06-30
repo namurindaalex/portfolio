@@ -1,308 +1,291 @@
-// Configuration
-const CONFIG = {
-    SHEET_ID: '17MHb6_7adccMAAzQZpceWRgCiu8DETcDNmFXDWQXBvo', // Replace with your Google Sheet ID
-    API_KEY: 'AIzaSyDo2jcgXLyef3Myck6BekuVcWVyoGiuS2o', // Replace with your Google Sheets API key
-    SHEET_NAME: 'UNEECO Delivery Sheet'
-};
+// script.js
 
-// Global variables
-let deliveriesData = [];
-let filteredData = [];
+// Global variables for data storage
+let deliveryData = [];
+let currentEditIndex = -1;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    loadData();
+    updateDashboard();
+    setupEventListeners();
+    
+    // Set today's date as default
+    document.getElementById('deliveryDate').value = new Date().toISOString().split('T')[0];
 });
 
-function initializeApp() {
-    setupEventListeners();
-    loadData();
-    setDefaultDate();
-    
-    // Hide loading screen after 2 seconds
-    setTimeout(() => {
-        document.getElementById('loadingScreen').classList.add('hidden');
-    }, 2000);
-}
-
+// Setup event listeners
 function setupEventListeners() {
-    // Search functionality
-    document.getElementById('searchInput').addEventListener('input', handleSearch);
-    
-    // Filter functionality
-    document.getElementById('statusFilter').addEventListener('change', handleFilter);
-    
     // Form submission
     document.getElementById('deliveryForm').addEventListener('submit', handleFormSubmit);
     
-    // Modal close on escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
+    // Time change listeners for real-time status updates
+    document.getElementById('dispatchTime').addEventListener('change', updateDeliveryStatus);
+    document.getElementById('arrivalTime').addEventListener('change', updateDeliveryStatus);
+    
+    // Import file listener
+    document.getElementById('importFile').addEventListener('change', handleFileImport);
+    
+    // Auto-save data every 30 seconds
+    setInterval(saveData, 30000);
 }
 
-function setDefaultDate() {
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('date').value = today;
-}
-
-// Google Sheets API Functions
-async function loadData() {
-    try {
-        showLoading();
-        
-        // If no API key or Sheet ID configured, use sample data
-        if (!CONFIG.API_KEY || CONFIG.API_KEY === 'YourApiKeyHere') {
-            loadSampleData();
-            return;
-        }
-        
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${CONFIG.SHEET_NAME}?key=${CONFIG.API_KEY}`;
-        const response = await fetch(url);
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch data');
-        }
-        
-        const data = await response.json();
-        processSheetData(data.values);
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
-        showToast('Failed to load data. Using sample data.', 'error');
-        loadSampleData();
-    } finally {
-        hideLoading();
+// Tab Management
+function showTab(tabName) {
+    // Hide all tabs
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    // Remove active class from all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Show selected tab
+    document.getElementById(tabName + '-tab').classList.add('active');
+    event.target.classList.add('active');
+    
+    // Update data when switching to certain tabs
+    if (tabName === 'dashboard') {
+        updateDashboard();
+    } else if (tabName === 'records') {
+        populateRecordsTable();
     }
 }
 
-function loadSampleData() {
-    // Sample data for demonstration
-    deliveriesData = [
-        {
-            date: '2025-06-30',
-            invoice: 'INV-001',
-            supervisor: 'John Smith',
-            deliveryPerson: 'Alex Brown',
-            dispatchTime: '09:00',
-            arrivalTime: '09:30',
-            duration: 30,
-            status: 'Success'
-        },
-        {
-            date: '2025-06-30',
-            invoice: 'INV-002',
-            supervisor: 'Sarah Johnson',
-            deliveryPerson: 'Maria Garcia',
-            dispatchTime: '10:15',
-            arrivalTime: '11:00',
-            duration: 45,
-            status: 'Success'
-        },
-        {
-            date: '2025-06-30',
-            invoice: 'INV-003',
-            supervisor: 'Mike Davis',
-            deliveryPerson: 'David Kim',
-            dispatchTime: '14:30',
-            arrivalTime: '15:45',
-            duration: 75,
-            status: 'Failed'
-        },
-        {
-            date: '2025-06-29',
-            invoice: 'INV-004',
-            supervisor: 'John Smith',
-            deliveryPerson: 'Alex Brown',
-            dispatchTime: '08:45',
-            arrivalTime: '09:15',
-            duration: 30,
-            status: 'Success'
-        },
-        {
-            date: '2025-06-29',
-            invoice: 'INV-005',
-            supervisor: 'Sarah Johnson',
-            deliveryPerson: 'Maria Garcia',
-            dispatchTime: '11:00',
-            arrivalTime: '11:35',
-            duration: 35,
-            status: 'Success'
-        }
-    ];
+// Form Management
+function handleFormSubmit(e) {
+    e.preventDefault();
     
-    filteredData = [...deliveriesData];
-    updateUI();
-}
-
-function processSheetData(values) {
-    if (!values || values.length === 0) {
-        deliveriesData = [];
-        filteredData = [];
-        updateUI();
+    const formData = {
+        id: currentEditIndex >= 0 ? deliveryData[currentEditIndex].id : Date.now(),
+        invoiceNumber: document.getElementById('invoiceNumber').value,
+        deliveryDate: document.getElementById('deliveryDate').value,
+        dispatchTime: document.getElementById('dispatchTime').value,
+        arrivalTime: document.getElementById('arrivalTime').value,
+        storeSupervisor: document.getElementById('storeSupervisor').value,
+        deliveryPerson: document.getElementById('deliveryPerson').value,
+        vehicleNumber: document.getElementById('vehicleNumber').value || 'N/A',
+        timestamp: new Date().toISOString()
+    };
+    
+    // Calculate delivery time and status
+    const deliveryStats = calculateDeliveryStats(formData.dispatchTime, formData.arrivalTime);
+    formData.deliveryTimeMinutes = deliveryStats.minutes;
+    formData.isSuccessful = deliveryStats.isSuccessful;
+    
+    // Validate required fields
+    if (!validateForm(formData)) {
         return;
     }
     
-    // Skip header row
-    const dataRows = values.slice(1);
+    // Save data
+    if (currentEditIndex >= 0) {
+        deliveryData[currentEditIndex] = formData;
+        showMessage('Delivery record updated successfully!', 'success');
+    } else {
+        deliveryData.push(formData);
+        showMessage('Delivery record added successfully!', 'success');
+    }
     
-    deliveriesData = dataRows.map(row => {
-        const dispatchTime = row[4] || '';
-        const arrivalTime = row[5] || '';
-        const duration = calculateDuration(dispatchTime, arrivalTime);
-        
-        return {
-            date: row[0] || '',
-            invoice: row[1] || '',
-            supervisor: row[2] || '',
-            deliveryPerson: row[3] || '',
-            dispatchTime: dispatchTime,
-            arrivalTime: arrivalTime,
-            duration: duration,
-            status: duration > 60 ? 'Failed' : 'Success'
-        };
-    });
-    
-    filteredData = [...deliveriesData];
-    updateUI();
+    // Reset form and update displays
+    clearForm();
+    saveData();
+    updateDashboard();
+    populateRecordsTable();
 }
 
-async function saveToSheet(deliveryData) {
-    try {
-        // If no API key configured, just update local data
-        if (!CONFIG.API_KEY || CONFIG.API_KEY === 'YourApiKeyHere') {
-            deliveriesData.unshift(deliveryData);
-            filteredData = [...deliveriesData];
-            updateUI();
-            showToast('Delivery added successfully!');
-            return;
+function validateForm(data) {
+    const required = ['invoiceNumber', 'deliveryDate', 'dispatchTime', 'arrivalTime', 'storeSupervisor', 'deliveryPerson'];
+    
+    for (let field of required) {
+        if (!data[field] || data[field].trim() === '') {
+            showMessage(`Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`, 'error');
+            return false;
         }
+    }
+    
+    // Check if arrival time is after dispatch time
+    if (data.dispatchTime >= data.arrivalTime) {
+        showMessage('Arrival time must be after dispatch time', 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+function clearForm() {
+    document.getElementById('deliveryForm').reset();
+    document.getElementById('deliveryDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('statusIndicator').className = 'status-indicator';
+    document.getElementById('statusText').textContent = 'Enter times to calculate';
+    document.getElementById('deliveryTimeDisplay').textContent = '';
+    currentEditIndex = -1;
+}
+
+function updateDeliveryStatus() {
+    const dispatchTime = document.getElementById('dispatchTime').value;
+    const arrivalTime = document.getElementById('arrivalTime').value;
+    
+    if (dispatchTime && arrivalTime) {
+        const stats = calculateDeliveryStats(dispatchTime, arrivalTime);
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const deliveryTimeDisplay = document.getElementById('deliveryTimeDisplay');
         
-        // Prepare data for Google Sheets
-        const values = [[
-            deliveryData.date,
-            deliveryData.invoice,
-            deliveryData.supervisor,
-            deliveryData.deliveryPerson,
-            deliveryData.dispatchTime,
-            deliveryData.arrivalTime
-        ]];
-        
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${CONFIG.SHEET_NAME}:append?valueInputOption=RAW&key=${CONFIG.API_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                values: values
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to save data');
-        }
-        
-        // Refresh data after successful save
-        await loadData();
-        showToast('Delivery saved successfully!');
-        
-    } catch (error) {
-        console.error('Error saving data:', error);
-        showToast('Failed to save delivery', 'error');
+        statusIndicator.className = 'status-indicator ' + (stats.isSuccessful ? 'status-success' : 'status-failed');
+        statusText.textContent = stats.isSuccessful ? 'On Time Delivery' : 'Delayed Delivery';
+        deliveryTimeDisplay.textContent = `${stats.minutes} minutes`;
     }
 }
 
-// Utility Functions
-function calculateDuration(dispatchTime, arrivalTime) {
-    if (!dispatchTime || !arrivalTime) return 0;
+// Calculation Functions
+function calculateDeliveryStats(dispatchTime, arrivalTime) {
+    const dispatch = new Date(`1970-01-01T${dispatchTime}:00`);
+    const arrival = new Date(`1970-01-01T${arrivalTime}:00`);
     
-    const dispatch = new Date(`2000-01-01 ${dispatchTime}`);
-    const arrival = new Date(`2000-01-01 ${arrivalTime}`);
+    // Handle next day delivery
+    if (arrival < dispatch) {
+        arrival.setDate(arrival.getDate() + 1);
+    }
     
-    const diffInMs = arrival - dispatch;
-    return Math.round(diffInMs / (1000 * 60)); // Convert to minutes
+    const diffMs = arrival - dispatch;
+    const minutes = Math.round(diffMs / (1000 * 60));
+    
+    return {
+        minutes: minutes,
+        isSuccessful: minutes <= 45
+    };
 }
 
-function formatDuration(minutes) {
-    if (minutes === 0) return '--';
-    if (minutes < 60) return `${minutes}m`;
+// Dashboard Functions
+function updateDashboard() {
+    const today = new Date().toISOString().split('T')[0];
+    const weekStart = getWeekStart(new Date());
     
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+    // Calculate daily stats
+    const todayDeliveries = deliveryData.filter(d => d.deliveryDate === today);
+    const todaySuccessful = todayDeliveries.filter(d => d.isSuccessful).length;
+    const todaySuccessRate = todayDeliveries.length > 0 ? (todaySuccessful / todayDeliveries.length * 100) : 0;
+    
+    // Calculate weekly stats
+    const weeklyDeliveries = deliveryData.filter(d => new Date(d.deliveryDate) >= weekStart);
+    const dailyStats = groupDeliveriesByDate(weeklyDeliveries);
+    const activeDays = Object.keys(dailyStats).length;
+    const weeklyAverage = activeDays > 0 ? 
+        Object.values(dailyStats).reduce((sum, day) => sum + day.successRate, 0) / activeDays : 0;
+    
+    // Update header stats
+    document.getElementById('todaySuccess').textContent = todaySuccessRate.toFixed(1) + '%';
+    document.getElementById('weeklyAverage').textContent = weeklyAverage.toFixed(1) + '%';
+    
+    // Update dashboard cards
+    document.getElementById('dailyKPI').textContent = todaySuccessRate.toFixed(1) + '%';
+    document.getElementById('dailyTotal').textContent = todayDeliveries.length;
+    document.getElementById('dailySuccessful').textContent = todaySuccessful;
+    
+    document.getElementById('weeklyKPI').textContent = weeklyAverage.toFixed(1) + '%';
+    document.getElementById('activeDays').textContent = activeDays;
+    document.getElementById('weeklyTotal').textContent = weeklyDeliveries.length;
+    
+    // Update target achievement
+    const targetAchievement = (weeklyAverage / 95) * 100;
+    document.getElementById('targetAchievement').textContent = Math.min(targetAchievement, 100).toFixed(1) + '%';
+    document.getElementById('targetProgress').style.width = Math.min(targetAchievement, 100) + '%';
+    
+    // Update chart (simple bar representation)
+    updateWeeklyChart(dailyStats);
 }
 
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
+function groupDeliveriesByDate(deliveries) {
+    const grouped = {};
+    
+    deliveries.forEach(delivery => {
+        const date = delivery.deliveryDate;
+        if (!grouped[date]) {
+            grouped[date] = { total: 0, successful: 0, successRate: 0 };
+        }
+        grouped[date].total++;
+        if (delivery.isSuccessful) {
+            grouped[date].successful++;
+        }
+        grouped[date].successRate = (grouped[date].successful / grouped[date].total) * 100;
+    });
+    
+    return grouped;
+}
+
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+    return new Date(d.setDate(diff));
+}
+
+function updateWeeklyChart(dailyStats) {
+    const canvas = document.getElementById('weeklyChart');
+    const ctx = canvas.getContext('2d');
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    const dates = Object.keys(dailyStats).slice(-7); // Last 7 days
+    if (dates.length === 0) return;
+    
+    const maxRate = 100;
+    const barWidth = canvas.width / dates.length - 10;
+    const barMaxHeight = canvas.height - 40;
+    
+    // Draw bars
+    dates.forEach((date, index) => {
+        const rate = dailyStats[date].successRate;
+        const barHeight = (rate / maxRate) * barMaxHeight;
+        const x = index * (barWidth + 10);
+        const y = canvas.height - barHeight - 20;
+        
+        // Bar color based on performance
+        ctx.fillStyle = rate >= 95 ? '#27ae60' : rate >= 80 ? '#f39c12' : '#e74c3c';
+        ctx.fillRect(x, y, barWidth, barHeight);
+        
+        // Date label
+        ctx.fillStyle = '#333';
+        ctx.font = '10px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(new Date(date).getDate(), x + barWidth/2, canvas.height - 5);
+        
+        // Rate label
+        ctx.fillStyle = '#666';
+        ctx.font = '10px Arial';
+        ctx.fillText(rate.toFixed(0) + '%', x + barWidth/2, y - 5);
     });
 }
 
-// UI Update Functions
-function updateUI() {
-    updateKPIs();
-    updateTable();
-}
-
-function updateKPIs() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayDeliveries = deliveriesData.filter(d => d.date === today);
-    
-    // Success Rate
-    const successCount = todayDeliveries.filter(d => d.status === 'Success').length;
-    const successRate = todayDeliveries.length > 0 ? 
-        Math.round((successCount / todayDeliveries.length) * 100) : 0;
-    document.getElementById('successRate').textContent = `${successRate}%`;
-    
-    // Average Time
-    const validDurations = todayDeliveries
-        .map(d => d.duration)
-        .filter(d => d > 0);
-    const avgTime = validDurations.length > 0 ? 
-        Math.round(validDurations.reduce((a, b) => a + b, 0) / validDurations.length) : 0;
-    document.getElementById('avgTime').textContent = formatDuration(avgTime);
-    
-    // Total Deliveries
-    document.getElementById('totalDeliveries').textContent = todayDeliveries.length;
-}
-
-function updateTable() {
-    const tbody = document.getElementById('deliveryTableBody');
+// Records Table Functions
+function populateRecordsTable() {
+    const tbody = document.getElementById('recordsTableBody');
     tbody.innerHTML = '';
     
-    if (filteredData.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 2rem; color: #9ca3af;">
-                    No deliveries found
-                </td>
-            </tr>
-        `;
-        return;
-    }
+    // Sort by date (newest first)
+    const sortedData = [...deliveryData].sort((a, b) => new Date(b.deliveryDate) - new Date(a.deliveryDate));
     
-    filteredData.forEach((delivery, index) => {
+    sortedData.forEach((record, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${formatDate(delivery.date)}</td>
-            <td><strong>${delivery.invoice}</strong></td>
-            <td>${delivery.supervisor}</td>
-            <td>${delivery.deliveryPerson}</td>
-            <td>${formatDuration(delivery.duration)}</td>
+            <td>${formatDate(record.deliveryDate)}</td>
+            <td>${record.invoiceNumber}</td>
+            <td>${record.dispatchTime}</td>
+            <td>${record.arrivalTime}</td>
+            <td>${record.deliveryTimeMinutes} min</td>
+            <td><span class="status-badge ${record.isSuccessful ? 'status-success' : 'status-failed'}">
+                ${record.isSuccessful ? 'Success' : 'Delayed'}
+            </span></td>
+            <td>${record.storeSupervisor}</td>
+            <td>${record.deliveryPerson}</td>
+            <td>${record.vehicleNumber}</td>
             <td>
-                <span class="status-badge status-${delivery.status.toLowerCase()}">
-                    ${delivery.status}
-                </span>
-            </td>
-            <td>
-                <button class="action-btn" onclick="deleteDelivery(${index})" title="Delete">
+                <button class="action-btn edit" onclick="editRecord(${deliveryData.indexOf(record)})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete" onclick="deleteRecord(${deliveryData.indexOf(record)})">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -311,143 +294,367 @@ function updateTable() {
     });
 }
 
-// Event Handlers
-function handleSearch() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    applyFilters(searchTerm);
+function editRecord(index) {
+    const record = deliveryData[index];
+    currentEditIndex = index;
+    
+    // Populate form with record data
+    document.getElementById('invoiceNumber').value = record.invoiceNumber;
+    document.getElementById('deliveryDate').value = record.deliveryDate;
+    document.getElementById('dispatchTime').value = record.dispatchTime;
+    document.getElementById('arrivalTime').value = record.arrivalTime;
+    document.getElementById('storeSupervisor').value = record.storeSupervisor;
+    document.getElementById('deliveryPerson').value = record.deliveryPerson;
+    document.getElementById('vehicleNumber').value = record.vehicleNumber === 'N/A' ? '' : record.vehicleNumber;
+    
+    // Update status display
+    updateDeliveryStatus();
+    
+    // Switch to entry tab
+    showTab('entry');
+    
+    showMessage('Record loaded for editing', 'success');
 }
 
-function handleFilter() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    applyFilters(searchTerm);
+function deleteRecord(index) {
+    if (confirm('Are you sure you want to delete this record?')) {
+        deliveryData.splice(index, 1);
+        saveData();
+        populateRecordsTable();
+        updateDashboard();
+        showMessage('Record deleted successfully', 'success');
+    }
 }
 
-function applyFilters(searchTerm = '') {
-    const statusFilter = document.getElementById('statusFilter').value;
-    
-    filteredData = deliveriesData.filter(delivery => {
-        const matchesSearch = !searchTerm || 
-            delivery.invoice.toLowerCase().includes(searchTerm) ||
-            delivery.supervisor.toLowerCase().includes(searchTerm) ||
-            delivery.deliveryPerson.toLowerCase().includes(searchTerm);
-        
-        const matchesStatus = !statusFilter || delivery.status === statusFilter;
-        
-        return matchesSearch && matchesStatus;
-    });
-    
-    updateTable();
-}
-
-function handleFormSubmit(e) {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    const dispatchTime = formData.get('dispatchTime') || document.getElementById('dispatchTime').value;
-    const arrivalTime = formData.get('arrivalTime') || document.getElementById('arrivalTime').value;
-    
-    // Validate times
-    if (dispatchTime >= arrivalTime) {
-        showToast('Arrival time must be after dispatch time', 'error');
+function filterRecords() {
+    const filterDate = document.getElementById('filterDate').value;
+    if (!filterDate) {
+        populateRecordsTable();
         return;
     }
     
-    const duration = calculateDuration(dispatchTime, arrivalTime);
+    const tbody = document.getElementById('recordsTableBody');
+    tbody.innerHTML = '';
     
-    const deliveryData = {
-        date: document.getElementById('date').value,
-        invoice: document.getElementById('invoice').value,
-        supervisor: document.getElementById('supervisor').value,
-        deliveryPerson: document.getElementById('deliveryPerson').value,
-        dispatchTime: dispatchTime,
-        arrivalTime: arrivalTime,
-        duration: duration,
-        status: duration > 60 ? 'Failed' : 'Success'
-    };
+    const filteredData = deliveryData.filter(record => record.deliveryDate === filterDate);
     
-    // Disable submit button
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    
-    saveToSheet(deliveryData).finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-save"></i> Save';
-        closeModal();
-        document.getElementById('deliveryForm').reset();
-        setDefaultDate();
+    filteredData.forEach((record, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${formatDate(record.deliveryDate)}</td>
+            <td>${record.invoiceNumber}</td>
+            <td>${record.dispatchTime}</td>
+            <td>${record.arrivalTime}</td>
+            <td>${record.deliveryTimeMinutes} min</td>
+            <td><span class="status-badge ${record.isSuccessful ? 'status-success' : 'status-failed'}">
+                ${record.isSuccessful ? 'Success' : 'Delayed'}
+            </span></td>
+            <td>${record.storeSupervisor}</td>
+            <td>${record.deliveryPerson}</td>
+            <td>${record.vehicleNumber}</td>
+            <td>
+                <button class="action-btn edit" onclick="editRecord(${deliveryData.indexOf(record)})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="action-btn delete" onclick="deleteRecord(${deliveryData.indexOf(record)})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
     });
+    
+    showMessage(`Found ${filteredData.length} records for ${formatDate(filterDate)}`, 'success');
 }
 
-function deleteDelivery(index) {
-    if (confirm('Are you sure you want to delete this delivery record?')) {
-        const originalIndex = deliveriesData.findIndex(d => 
-            d.invoice === filteredData[index].invoice && 
-            d.date === filteredData[index].date
-        );
-        
-        if (originalIndex > -1) {
-            deliveriesData.splice(originalIndex, 1);
-            filteredData = deliveriesData.filter(delivery => {
-                const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-                const statusFilter = document.getElementById('statusFilter').value;
+function clearFilter() {
+    document.getElementById('filterDate').value = '';
+    populateRecordsTable();
+    showMessage('Filter cleared', 'success');
+}
+
+// Export/Import Functions
+function exportToCSV() {
+    if (deliveryData.length === 0) {
+        showMessage('No data to export', 'error');
+        return;
+    }
+    
+    const headers = [
+        'Date', 'Invoice Number', 'Dispatch Time', 'Arrival Time', 
+        'Delivery Time (minutes)', 'Status', 'Store Supervisor', 
+        'Delivery Person', 'Vehicle Number'
+    ];
+    
+    const csvContent = [
+        headers.join(','),
+        ...deliveryData.map(record => [
+            record.deliveryDate,
+            record.invoiceNumber,
+            record.dispatchTime,
+            record.arrivalTime,
+            record.deliveryTimeMinutes,
+            record.isSuccessful ? 'Success' : 'Delayed',
+            record.storeSupervisor,
+            record.deliveryPerson,
+            record.vehicleNumber
+        ].join(','))
+    ].join('\n');
+    
+    downloadFile(csvContent, 'delivery-records.csv', 'text/csv');
+    showMessage('CSV file downloaded successfully', 'success');
+}
+
+function exportToJSON() {
+    if (deliveryData.length === 0) {
+        showMessage('No data to export', 'error');
+        return;
+    }
+    
+    const jsonContent = JSON.stringify({
+        exportDate: new Date().toISOString(),
+        recordCount: deliveryData.length,
+        data: deliveryData
+    }, null, 2);
+    
+    downloadFile(jsonContent, 'delivery-backup.json', 'application/json');
+    showMessage('JSON backup downloaded successfully', 'success');
+}
+
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            if (file.name.endsWith('.json')) {
+                const importedData = JSON.parse(e.target.result);
+                if (importedData.data && Array.isArray(importedData.data)) {
+                    deliveryData = importedData.data;
+                    saveData();
+                    updateDashboard();
+                    populateRecordsTable();
+                    showMessage(`Imported ${importedData.data.length} records successfully`, 'success');
+                } else {
+                    throw new Error('Invalid JSON format');
+                }
+            } else if (file.name.endsWith('.csv')) {
+                // Simple CSV parsing - in production, use a proper CSV parser
+                const lines = e.target.result.split('\n');
+                const headers = lines[0].split(',');
+                const imported = [];
                 
-                const matchesSearch = !searchTerm || 
-                    delivery.invoice.toLowerCase().includes(searchTerm) ||
-                    delivery.supervisor.toLowerCase().includes(searchTerm) ||
-                    delivery.deliveryPerson.toLowerCase().includes(searchTerm);
+                for (let i = 1; i < lines.length; i++) {
+                    const values = lines[i].split(',');
+                    if (values.length >= 8) {
+                        imported.push({
+                            id: Date.now() + i,
+                            deliveryDate: values[0],
+                            invoiceNumber: values[1],
+                            dispatchTime: values[2],
+                            arrivalTime: values[3],
+                            deliveryTimeMinutes: parseInt(values[4]),
+                            isSuccessful: values[5] === 'Success',
+                            storeSupervisor: values[6],
+                            deliveryPerson: values[7],
+                            vehicleNumber: values[8] || 'N/A',
+                            timestamp: new Date().toISOString()
+                        });
+                    }
+                }
                 
-                const matchesStatus = !statusFilter || delivery.status === statusFilter;
-                
-                return matchesSearch && matchesStatus;
-            });
-            
-            updateUI();
-            showToast('Delivery record deleted');
+                deliveryData = imported;
+                saveData();
+                updateDashboard();
+                populateRecordsTable();
+                showMessage(`Imported ${imported.length} records from CSV`, 'success');
+            }
+        } catch (error) {
+            showMessage('Error importing file: ' + error.message, 'error');
         }
+    };
+    
+    reader.readAsText(file);
+    event.target.value = ''; // Reset file input
+}
+
+function downloadFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+// Data Persistence Functions
+function saveData() {
+    try {
+        // In a real application, this would send data to a server
+        // For now, we'll use localStorage as a fallback
+        const dataToSave = {
+            version: '1.0',
+            lastUpdate: new Date().toISOString(),
+            records: deliveryData
+        };
+        
+        // Note: In the Claude.ai environment, localStorage isn't available
+        // This is where you would integrate with your preferred cloud storage
+        console.log('Data saved:', dataToSave);
+        
+        // Example cloud storage integration points:
+        // - Firebase Firestore
+        // - Google Sheets API
+        // - Custom REST API
+        // - Airtable API
+        
+    } catch (error) {
+        console.error('Error saving data:', error);
     }
 }
 
-// Modal Functions
-function openModal() {
-    document.getElementById('deliveryModal').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeModal() {
-    document.getElementById('deliveryModal').classList.remove('active');
-    document.body.style.overflow = 'auto';
+function loadData() {
+    try {
+        // In a real application, this would fetch data from a server
+        // For demo purposes, we'll start with empty data
+        
+        // Example data for demonstration
+        deliveryData = [
+            {
+                id: 1,
+                invoiceNumber: 'INV-001',
+                deliveryDate: new Date().toISOString().split('T')[0],
+                dispatchTime: '09:00',
+                arrivalTime: '09:30',
+                deliveryTimeMinutes: 30,
+                isSuccessful: true,
+                storeSupervisor: 'John Smith',
+                deliveryPerson: 'Mike Johnson',
+                vehicleNumber: 'ABC-123',
+                timestamp: new Date().toISOString()
+            },
+            {
+                id: 2,
+                invoiceNumber: 'INV-002',
+                deliveryDate: new Date().toISOString().split('T')[0],
+                dispatchTime: '10:00',
+                arrivalTime: '11:00',
+                deliveryTimeMinutes: 60,
+                isSuccessful: false,
+                storeSupervisor: 'Jane Doe',
+                deliveryPerson: 'Sarah Wilson',
+                vehicleNumber: 'XYZ-789',
+                timestamp: new Date().toISOString()
+            }
+        ];
+        
+        console.log('Sample data loaded');
+        
+    } catch (error) {
+        console.error('Error loading data:', error);
+        deliveryData = [];
+    }
 }
 
 // Utility Functions
-function showLoading() {
-    // Could add a loading indicator here
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
 }
 
-function hideLoading() {
-    // Could hide loading indicator here
-}
-
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+function showMessage(message, type = 'success') {
+    const container = document.getElementById('messageContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${type}`;
+    messageDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; font-size: 18px; cursor: pointer; opacity: 0.7;">×</button>
         </div>
     `;
     
-    container.appendChild(toast);
+    container.appendChild(messageDiv);
     
-    // Auto remove after 3 seconds
+    // Auto-remove after 5 seconds
     setTimeout(() => {
-        toast.style.animation = 'toastSlide 0.3s ease reverse';
-        setTimeout(() => {
-            if (container.contains(toast)) {
-                container.removeChild(toast);
-            }
-        }, 300);
-    }, 3000);
+        if (messageDiv.parentElement) {
+            messageDiv.remove();
+        }
+    }, 5000);
 }
+
+// Cloud Storage Integration Examples
+// Uncomment and modify based on your chosen cloud storage solution
+
+/*
+// Firebase Firestore Example
+async function saveToFirestore() {
+    try {
+        const db = firebase.firestore();
+        await db.collection('deliveries').doc('data').set({
+            records: deliveryData,
+            lastUpdate: new Date()
+        });
+        showMessage('Data synced to cloud', 'success');
+    } catch (error) {
+        showMessage('Error syncing to cloud: ' + error.message, 'error');
+    }
+}
+
+// Google Sheets API Example
+async function saveToGoogleSheets() {
+    try {
+        const response = await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'saveData',
+                data: deliveryData
+            })
+        });
+        
+        if (response.ok) {
+            showMessage('Data synced to Google Sheets', 'success');
+        } else {
+            throw new Error('Failed to sync');
+        }
+    } catch (error) {
+        showMessage('Error syncing to Google Sheets: ' + error.message, 'error');
+    }
+}
+
+// Custom API Example
+async function saveToCustomAPI() {
+    try {
+        const response = await fetch('/api/deliveries', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer YOUR_API_TOKEN'
+            },
+            body: JSON.stringify({
+                records: deliveryData
+            })
+        });
+        
+        if (response.ok) {
+            showMessage('Data synced to server', 'success');
+        } else {
+            throw new Error('Failed to sync');
+        }
+    } catch (error) {
+        showMessage('Error syncing to server: ' + error.message, 'error');
+    }
+}
+*/

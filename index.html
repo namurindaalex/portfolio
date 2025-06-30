@@ -3,195 +3,264 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DeliveryTrack Pro</title>
+    <title>Delivery Tracking System</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <i class="fas fa-truck"></i>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-truck"></i>UUL Delivery System</h1>
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">Today's Success Rate</span>
+                        <span class="stat-value" id="todaySuccess">0%</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">Weekly Average</span>
+                        <span class="stat-value" id="weeklyAverage">0%</span>
+                    </div>
+                </div>
             </div>
-            <div class="loading-text">DeliveryTrack Pro</div>
-            <div class="loading-spinner"></div>
-        </div>
-    </div>
+        </header>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <i class="fas fa-truck"></i>
-                <span>DeliveryTrack Pro</span>
-            </div>
-            <button class="add-btn" onclick="openModal()">
-                <i class="fas fa-plus"></i>
-                <span>Add Delivery</span>
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('entry')">
+                <i class="fas fa-plus-circle"></i> New Delivery
             </button>
+            <button class="tab-btn" onclick="showTab('dashboard')">
+                <i class="fas fa-chart-dashboard"></i> Dashboard
+            </button>
+            <button class="tab-btn" onclick="showTab('records')">
+                <i class="fas fa-table"></i> All Records
+            </button>
+            <button class="tab-btn" onclick="showTab('export')">
+                <i class="fas fa-download"></i> Export Data
+            </button>
+        </nav>
+
+        <!-- Data Entry Tab -->
+        <div id="entry-tab" class="tab-content active">
+            <div class="form-container">
+                <h2><i class="fas fa-edit"></i> Enter Delivery Details</h2>
+                <form id="deliveryForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="invoiceNumber">Invoice Number *</label>
+                            <input type="text" id="invoiceNumber" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="deliveryDate">Delivery Date *</label>
+                            <input type="date" id="deliveryDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dispatchTime">Dispatch Time *</label>
+                            <input type="time" id="dispatchTime" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="arrivalTime">Arrival Time *</label>
+                            <input type="time" id="arrivalTime" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="storeSupervisor">Store Supervisor *</label>
+                            <input type="text" id="storeSupervisor" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="deliveryPerson">Delivery Person *</label>
+                            <input type="text" id="deliveryPerson" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="vehicleNumber">Vehicle Number</label>
+                            <input type="text" id="vehicleNumber" placeholder="Optional">
+                        </div>
+                        
+                        <div class="form-group status-display">
+                            <label>Delivery Status</label>
+                            <div class="status-indicator" id="statusIndicator">
+                                <span class="status-text" id="statusText">Enter times to calculate</span>
+                                <span class="delivery-time" id="deliveryTimeDisplay"></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Delivery Record
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                            <i class="fas fa-trash"></i> Clear Form
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="main">
-        <!-- KPI Section -->
-        <section class="kpi-section">
-            <div class="kpi-grid">
-                <div class="kpi-card success">
-                    <div class="kpi-icon">
-                        <i class="fas fa-check-circle"></i>
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content">
+            <div class="dashboard-container">
+                <h2><i class="fas fa-chart-line"></i> Performance Dashboard</h2>
+                
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Daily Performance</h3>
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-main-stat">
+                                <span class="kpi-value" id="dailyKPI">0%</span>
+                                <span class="kpi-label">Success Rate</span>
+                            </div>
+                            <div class="kpi-details">
+                                <div class="kpi-detail">
+                                    <span>Total Deliveries:</span>
+                                    <span id="dailyTotal">0</span>
+                                </div>
+                                <div class="kpi-detail">
+                                    <span>Successful:</span>
+                                    <span id="dailySuccessful">0</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-content">
-                        <div class="kpi-value" id="successRate">--</div>
-                        <div class="kpi-label">Success Rate</div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Weekly Performance</h3>
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-main-stat">
+                                <span class="kpi-value" id="weeklyKPI">0%</span>
+                                <span class="kpi-label">Average Success Rate</span>
+                            </div>
+                            <div class="kpi-details">
+                                <div class="kpi-detail">
+                                    <span>Days with Deliveries:</span>
+                                    <span id="activeDays">0</span>
+                                </div>
+                                <div class="kpi-detail">
+                                    <span>Total Deliveries:</span>
+                                    <span id="weeklyTotal">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Target Achievement</h3>
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-main-stat">
+                                <span class="kpi-value" id="targetAchievement">0%</span>
+                                <span class="kpi-label">vs 95% Target</span>
+                            </div>
+                            <div class="target-bar">
+                                <div class="target-progress" id="targetProgress"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="kpi-card info">
-                    <div class="kpi-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="kpi-content">
-                        <div class="kpi-value" id="avgTime">--</div>
-                        <div class="kpi-label">Avg Time</div>
-                    </div>
-                </div>
-
-                <div class="kpi-card primary">
-                    <div class="kpi-icon">
-                        <i class="fas fa-list"></i>
-                    </div>
-                    <div class="kpi-content">
-                        <div class="kpi-value" id="totalDeliveries">--</div>
-                        <div class="kpi-label">Total Today</div>
+                <div class="chart-container">
+                    <h3>Weekly Trend</h3>
+                    <div class="chart-placeholder">
+                        <canvas id="weeklyChart" width="400" height="200"></canvas>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Controls -->
-        <section class="controls">
-            <div class="search-filter">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search deliveries...">
+        <!-- Records Tab -->
+        <div id="records-tab" class="tab-content">
+            <div class="records-container">
+                <div class="records-header">
+                    <h2><i class="fas fa-list"></i> Delivery Records</h2>
+                    <div class="records-controls">
+                        <input type="date" id="filterDate" placeholder="Filter by date">
+                        <button class="btn btn-small" onclick="filterRecords()">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <button class="btn btn-small" onclick="clearFilter()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
                 </div>
-                <select id="statusFilter" class="filter-select">
-                    <option value="">All Status</option>
-                    <option value="Success">Success</option>
-                    <option value="Failed">Failed</option>
-                </select>
-                <button class="refresh-btn" onclick="loadData()">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
+                
+                <div class="table-container">
+                    <table id="recordsTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Invoice #</th>
+                                <th>Dispatch</th>
+                                <th>Arrival</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th>Supervisor</th>
+                                <th>Delivery Person</th>
+                                <th>Vehicle</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- Records will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </section>
+        </div>
 
-        <!-- Deliveries Table -->
-        <section class="table-section">
-            <div class="table-container">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Invoice</th>
-                            <th>Supervisor</th>
-                            <th>Delivery Person</th>
-                            <th>Duration</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="deliveryTableBody">
-                        <!-- Data will be populated by JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
-
-    <!-- Add Delivery Modal -->
-    <div class="modal" id="deliveryModal">
-        <div class="modal-overlay" onclick="closeModal()"></div>
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2><i class="fas fa-plus-circle"></i> Add New Delivery</h2>
-                <button class="modal-close" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-
-            <form id="deliveryForm" class="modal-body">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="date">
-                            <i class="fas fa-calendar"></i> Date
-                        </label>
-                        <input type="date" id="date" required>
+        <!-- Export Tab -->
+        <div id="export-tab" class="tab-content">
+            <div class="export-container">
+                <h2><i class="fas fa-download"></i> Export Data</h2>
+                
+                <div class="export-options">
+                    <div class="export-card">
+                        <h3>CSV Export</h3>
+                        <p>Download all delivery records as CSV file</p>
+                        <button class="btn btn-primary" onclick="exportToCSV()">
+                            <i class="fas fa-file-csv"></i> Download CSV
+                        </button>
                     </div>
-
-                    <div class="form-group">
-                        <label for="invoice">
-                            <i class="fas fa-file-invoice"></i> Invoice #
-                        </label>
-                        <input type="text" id="invoice" placeholder="INV-001" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="supervisor">
-                            <i class="fas fa-user-tie"></i> Supervisor
-                        </label>
-                        <select id="supervisor" required>
-                            <option value="">Select Supervisor</option>
-                            <option value="John Smith">John Smith</option>
-                            <option value="Sarah Johnson">Sarah Johnson</option>
-                            <option value="Mike Davis">Mike Davis</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="deliveryPerson">
-                            <i class="fas fa-user"></i> Delivery Person
-                        </label>
-                        <select id="deliveryPerson" required>
-                            <option value="">Select Person</option>
-                            <option value="Alex Brown">Alex Brown</option>
-                            <option value="Maria Garcia">Maria Garcia</option>
-                            <option value="David Kim">David Kim</option>
-                        </select>
-                    </div> 
-
-                    <div class="form-group">
-                        <label for="dispatchTime">
-                            <i class="fas fa-play"></i> Dispatch Time
-                        </label>
-                        <input type="time" id="dispatchTime" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="arrivalTime">
-                            <i class="fas fa-flag-checkered"></i> Arrival Time
-                        </label>
-                        <input type="time" id="arrivalTime" required>
+                    
+                    <div class="export-card">
+                        <h3>JSON Backup</h3>
+                        <p>Download complete data backup</p>
+                        <button class="btn btn-secondary" onclick="exportToJSON()">
+                            <i class="fas fa-file-code"></i> Download JSON
+                        </button>
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save
-                    </button>
+                <div class="import-section">
+                    <h3>Import Data</h3>
+                    <div class="import-area">
+                        <input type="file" id="importFile" accept=".json,.csv" style="display: none;">
+                        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">
+                            <i class="fas fa-upload"></i> Select File to Import
+                        </button>
+                        <p class="import-note">Supported formats: JSON, CSV</p>
+                    </div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
 
     <script src="main.js"></script>
 </body>
