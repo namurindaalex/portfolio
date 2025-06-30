@@ -593,27 +593,11 @@ function showMessage(message, type = 'success') {
 }
 
 // Cloud Storage Integration Examples
-// Uncomment and modify based on your chosen cloud storage solution
-
-/*
-// Firebase Firestore Example
-async function saveToFirestore() {
-    try {
-        const db = firebase.firestore();
-        await db.collection('deliveries').doc('data').set({
-            records: deliveryData,
-            lastUpdate: new Date()
-        });
-        showMessage('Data synced to cloud', 'success');
-    } catch (error) {
-        showMessage('Error syncing to cloud: ' + error.message, 'error');
-    }
-}
-
+// Deployment id AKfycby7rViLIC_TS5_DaNtHsEzIiMNnraAdPTKg1XxHFfytbHOeV_Wb3bVnvHkY5GoHqyXV
 // Google Sheets API Example
 async function saveToGoogleSheets() {
     try {
-        const response = await fetch('YOUR_GOOGLE_APPS_SCRIPT_URL', {
+        const response = await fetch('https://script.google.com/macros/s/AKfycby7rViLIC_TS5_DaNtHsEzIiMNnraAdPTKg1XxHFfytbHOeV_Wb3bVnvHkY5GoHqyXV/exec', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -633,28 +617,3 @@ async function saveToGoogleSheets() {
         showMessage('Error syncing to Google Sheets: ' + error.message, 'error');
     }
 }
-
-// Custom API Example
-async function saveToCustomAPI() {
-    try {
-        const response = await fetch('/api/deliveries', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer YOUR_API_TOKEN'
-            },
-            body: JSON.stringify({
-                records: deliveryData
-            })
-        });
-        
-        if (response.ok) {
-            showMessage('Data synced to server', 'success');
-        } else {
-            throw new Error('Failed to sync');
-        }
-    } catch (error) {
-        showMessage('Error syncing to server: ' + error.message, 'error');
-    }
-}
-*/
